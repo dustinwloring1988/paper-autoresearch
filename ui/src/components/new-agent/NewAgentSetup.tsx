@@ -52,6 +52,7 @@ import { ModelDropdown } from "../AgentConfigForm";
 import { Field } from "../agent-config-primitives";
 import { SecretPicker } from "../environment-variables-editor/SecretPicker";
 import { Button } from "../ui/button";
+import { Checkbox } from "../ui/checkbox";
 import { Input } from "../ui/input";
 import {
   OnboardingCard,
@@ -142,7 +143,13 @@ function Setup({
   const [effort, setEffort] = useState("");
   const [modelOpen, setModelOpen] = useState(false);
   const [environmentOverride, setEnvironmentOverride] = useState("");
-  const [provider, setProvider] = useState("openrouter");
+  const [provider, setProvider] = useState(
+    brandType === "opencode_local" ? "opencode" : "openrouter",
+  );
+  // OpenCode Zen serves some models (including space-bunny-free) without a
+  // credential, so setup must let the operator defer the key rather than
+  // treating an empty field as a half-finished form.
+  const [deferApiKey, setDeferApiKey] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [providerBinding, setProviderBinding] = useState<EnvBinding | null>(
     null,
@@ -931,6 +938,7 @@ function Setup({
                                     setModel("");
                                     setApiKey("");
                                     setProviderBinding(null);
+                                    setDeferApiKey(false);
                                     resetTest();
                                   }}
                                 >
@@ -953,6 +961,31 @@ function Setup({
                                 </select>
                               </Field>
                             )}
+                            {brandType === "opencode_local" && provider === "opencode" && (
+                              <label className="flex items-start gap-3 sm:col-span-2">
+                                <Checkbox
+                                  checked={deferApiKey}
+                                  disabled={busy}
+                                  onCheckedChange={(checked) => {
+                                    setDeferApiKey(checked === true);
+                                    if (checked === true) {
+                                      setApiKey("");
+                                      setProviderBinding(null);
+                                    }
+                                    resetTest();
+                                  }}
+                                />
+                                <span className="text-sm">
+                                  Enter an API key later
+                                  <span className="block text-xs text-muted-foreground">
+                                    OpenCode Zen serves models like space-bunny-free
+                                    without a key. Leave this unchecked only if you
+                                    need a key for a paid or metered model.
+                                  </span>
+                                </span>
+                              </label>
+                            )}
+                            {!deferApiKey && (
                             <div
                               className={
                                 adapterType === "cursor_cloud"
@@ -996,7 +1029,8 @@ function Setup({
                                 </div>
                               </Field>
                             </div>
-                            {adapterType !== "cursor_cloud" && (
+                            )}
+                            {adapterType !== "cursor_cloud" && !deferApiKey && (
                               <div
                                 className={
                                   chooseProvider ? "sm:col-span-2" : undefined
