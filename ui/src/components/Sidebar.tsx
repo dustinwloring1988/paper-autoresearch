@@ -21,6 +21,7 @@ import {
   GanttChartSquare,
   LayoutGrid,
   Users,
+  FlaskConical,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -220,6 +221,7 @@ export function Sidebar({ children }: { children?: ReactNode }) {
           {showWorkspacesLink ? (
             <SidebarNavItem to="/workspaces" label="Workspaces" icon={GitBranch} />
           ) : null}
+          <SidebarNavItem to="/studies" label="Studies" icon={FlaskConical} textBadge="beta" />
           <PluginSlotOutlet
             slotTypes={["sidebar"]}
             context={pluginContext}
