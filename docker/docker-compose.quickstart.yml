@@ -6,11 +6,20 @@
 #   export ANTHROPIC_API_KEY="sk-ant-..."
 #   docker compose -f docker-compose.quickstart.yml up --build
 #
+# Compose derives the project name from this file's directory ("docker"), which
+# collides with every other Paperclip checkout on the host — two forks would
+# share a network, a container prefix, and a volume name. Override
+# COMPOSE_PROJECT_NAME per checkout so several instances can run side by side.
+name: "${COMPOSE_PROJECT_NAME:-paperclip-auto}"
+
 services:
   paperclip:
     build:
       context: ..
       dockerfile: Dockerfile
+    # Image name is project-scoped too, so `docker rmi` on one checkout cannot
+    # pull the image out from under another.
+    image: "${COMPOSE_PROJECT_NAME:-paperclip-auto}/paperclip:latest"
     # Ceiling on processes. The image makes tini PID 1 so orphaned agent
     # descendants are reaped instead of piling up as zombies; this is the
     # backstop if something leaks anyway — the container hits its own limit and
@@ -25,6 +34,11 @@ services:
       # ── LLM provider keys (at least one is needed for agents to work) ──
       OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
       ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+
+      # ── Onboarding seed adapter ──
+      # Adapter the server-created onboarding agent gets. Defaults to
+      # claude_local upstream; set this to run the seeded agent on OpenCode.
+      PAPERCLIP_ONBOARDING_SEED_ADAPTER_TYPE: "${PAPERCLIP_ONBOARDING_SEED_ADAPTER_TYPE:-opencode_local}"
 
       # ── Deployment settings ──
       # "authenticated" requires login, "local_trusted" skips auth
