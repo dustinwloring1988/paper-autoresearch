@@ -67,6 +67,12 @@ export interface Study {
   /** Drives the crash backoff / idea retry gate. */
   consecutiveCrashes: number;
   consecutiveDiscards: number;
+  /**
+   * Runs killed from outside — a GPU driver reset, a lost CUDA context, a power
+   * event. Counted separately from `consecutiveCrashes` because these say nothing
+   * about the idea under test and must not advance the crash circuit breaker.
+   */
+  transientFailures: number;
   lastKeptSha: string | null;
   lastActivityAt: Date | null;
   resultsTsvPath: string | null;
